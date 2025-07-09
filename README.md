@@ -74,7 +74,7 @@ Privacy-Preserving-ORB-Matching-system/
 - The ZKP concept is elaborated by the following figure:-
 
   <p align="center">
-    <img src="./Documentation/ZKP-Sketch.png" alt="Architecture" style="border:1px solid #ccc; padding:5px;" width="500"/>
+    <img src="./Media/ZKP-Sketch.png" alt="Architecture" style="border:1px solid #ccc; padding:5px;" width="500"/>
   </p>
 
 
