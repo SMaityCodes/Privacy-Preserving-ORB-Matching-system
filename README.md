@@ -254,7 +254,6 @@ Now you can compare the result produced by the Python program and the result pro
 - DR. SOUMYADEV MAITY (Mentor)
 
 
-```
 VS.
 ```
 ./ORB_Circom.sh 100 ./Images/Item1/image1.jpg ./Images/Item1/image2.jpg
