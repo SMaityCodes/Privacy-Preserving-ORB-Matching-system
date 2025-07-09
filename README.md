@@ -244,6 +244,12 @@ The following script takes two image files, extracts their features using the "f
 Now you can compare the result produced by the Python program and the result produced by the Circom program on any two images of your choice by just comparing the outcome of folloiwng two scripts:-
 ```
 ./ORB_Python.sh 100 ./Images/Item1/image1.jpg ./Images/Item1/image2.jpg
+```
+
+VS.
+```
+./ORB_Circom.sh 100 ./Images/Item1/image1.jpg ./Images/Item1/image2.jpg
+```
 
 ## 🙌 Credits:-
 
@@ -252,9 +258,3 @@ Now you can compare the result produced by the Python program and the result pro
 - MANASA PJ (Developper)
 - SHALINI TS (Developper)
 - DR. SOUMYADEV MAITY (Mentor)
-
-
-VS.
-```
-./ORB_Circom.sh 100 ./Images/Item1/image1.jpg ./Images/Item1/image2.jpg
-```
