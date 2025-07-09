@@ -46,72 +46,159 @@ Privacy-Preserving-ORB-Matching-system/
 
 ```
 
+## ⚙️ Prerequisite:-
 
-TESTING THE PYTHON PROGRAMS:-
+- UNIX OS (Ubuntu)
+- NodeJS (Version 16.x or higher) [Click here](https://nodejs.org/en)
+- SNARKJS (`npm install -g snarkjs`)
+- Circom [Click here](https://docs.circom.io/getting-started/installation/)
+- Circomlib [Click here](https://github.com/iden3/circomlib.git)
+- Python3
+
+### 🧠 Brief Background of ZKP System:-
+
+[🔝 Back to Top](#)
+
+- A zero-knowledge proof system (ZKP) involves three types of entities, viz., **prover**, **verifier** and a **trusted third party** (TTP)
+- A ZKP also involves a **Computation** which is some arbitrary function / algorithm ($f$)
+- The inputs to the function $f$ are of two types, viz., **public inputs** and **private inputs**
+- The public inputs are shared by the prover with the verifier, while the private inputs are kept secret only to the prover
+- The public inputs must include some **commitments** (usually hash) of the private inputs used in the computation
+- The verifier receives the commitments of the private inputs through some authentic / trusted channel
+- The TTP generates a key-pair corresponding to the computation functions $f$
+- The key-pair consists of a **proving-key** - which is used by the prover, and a **verification-key** - used by the verifier
+- The prover generates the output of the computation ($f$) along with a proof $$\pi$$
+- The output along with the proof  $$\pi$$ is sent to the verifier
+- The **soundness** property of the ZKP system ensures that the verification will be successful only when the computation has been done correctly using the given public inputs
+- The **zero-knowledge** property of the ZKP system ensures that no information can be retrieved regarding the private inputs used in the computation from either the public inputs or the proof $$\pi$$.
+- The ZKP concept is elaborated by the following figure:-
+
+  <p align="center">
+    <img src="./Documentation/ZKP-Sketch.png" alt="Architecture" style="border:1px solid #ccc; padding:5px;" width="500"/>
+  </p>
 
 
-# Grant Exeuton Priviledge to the bash scripts:-
+  
+### 🛠️ Role of Circom and SNARKJS Tools in Implementing a ZKP System:-
+
+[🔝 Back to Top](#)
+
+- Circom provides an way to define an arbitrary computation ($f$) in a high-level programming language (circom language)
+- In addition to defining the logic of the computation algorithm , we can define which inputs will be public and which will be private using this language's constructs
+- Circom compiler generates an R1CS file which is a Matrix representation of the defined computation algorithm ($f$)
+- The R1CS file is given as the input to the SNARKJS tool-chain
+- The SNARKJS tool is used in three phases, viz., **Setup Phase**, **Proof Generation Phase** and the **Verification Phase**
+  - The Setup Phase takes the R1CS file and generates a Prover-Key, Verification-Key pair corresponding to it
+  - The Proof Generation Phase is further executed in two steps, viz., **Witness Generation Phase** and **Final Proof Generation Phase**
+    - The **Witness Generation Phase** takes the R1CS file and the inputs to the computation (both public and private inputs) and produces an Extended Witness Vector
+      - The Inputs to this phase are supplied in a JSON file
+      - The Extended Witness Vector contains all the given input values, the generated output values along with the results of all intermediate calculations
+    - The **Final Proof Generation Phase** takes the generated Witness file and the prover-key and generates two files - Public.JSON and Proof.JSON
+      - The Public.JSON contains all the public inputs along with the outputs of the computation
+      - The Proof.JOSN contains the cryptographic proof of correctness of the computation
+  - The **Verification Phase** takes Public.JSON, Proof.JSON and the Verification-Key to verify. It results in ACCEPTANCE if everything is OK,REJECT otherwise
+- SNARKJS tool currently supports three cryptographic protocols for the generation of the proof, viz., Groth16, Plonk and Fflonk protocol
+
+### 💡 Our Proposed Idea:-
+
+[🔝 Back to Top](#)
+
+We acheive the same objective as defined by in-toto framework without disclosing either the Layout or the Link-Metadata contents to the end-user. This way we can ensure the SSC security while preserving the pivacy of a software firm. We use ZKP for this purpose. The details are as follows:-
+
+- **Private Inputs**: The actual Layout file and all the Link-Metadata files
+- **Commitments to Private Inputs**: Merkle-Root Hashes of the Layout file and Link-Metadata files
+- **Note**: there is no other Public Inputs besides the commitments to private inputs
+- **What the Computation Function genertates as output?**
+  - A boolean value to indicate whether the given Layout data matches with the given Merkle-Root Hash of the layout file
+  - A boolean value to indicate whether the given Link-Metadata matches with the given Merkle-Root Hash of the Link-Metadata file
+  - A boolean value to indicate whether the given Link-Metadata is compliant with the given Layout data (according to in-Toto logic described above)
+    
+- **Who is the Prover?**: the s/w development firm
+- **Who is the Verifier?**: the end-user (Client)
+- **Who is the TTP?**: Any globally trusted third party or, blockchain. Note that the private inputs are not disclosed to the TTP. It only generates the proving-key and verificationkey from a specific computation function $f$.
+  
+- **How does the Verifier (end-user) gets the commitments to private inputs (Merkle-Root Hashes of the Layout file and Link-Metadata files)?**
+  - The PM signs the following information using it's private-key and sends to the client
+    - The names of all steps and the public-keys of the authorized functionary for each step
+    - The Merkle-Root Hash of the Layout Data (the data itself is not shared with the client)
+  - The client fully trusts the PM and already holds the public-key of the PM (same assumption as in original in-Toto)
+  - Client verifies the above information using the PM's public key
+  - Each functionary signs the Merkle-Root Hash of the Link-Metadata (the metadata itself is not shared with the client) of the corresponding step
+  - The signed Merkle-Root Hashes of all the Link-Metadata are also sent to the client
+  - Client verifies the signatures and receives the authentic Merke-Root hases of all link-metadata
+
+
+
+
+## 🚀 How to Use this Repository:-
+
+
+### Grant Exeuton Priviledge to the bash scripts:-
+
+```
 chmod +x ORB_Python.sh
 chmod +x TestScript.sh
 chmod +x ORB_Circom.sh
+```
 
-
-# Eextract feature files from any two image files using the "featureExtracter.py" program. First argument is input filename, second argument is output filename and the third argument is no. of features to be extracted.
-
+### Eextract feature files from any two image files using the "featureExtracter.py" program. First argument is input filename, second argument is output filename and the third argument is no. of features to be extracted.
+```
 python3 ./Python_Progs/featureExtracter.py -i ./Images/Item1/image1.jpg -o ./tmp/Features1.pkl -n 100
 python3 ./Python_Progs/featureExtracter.py -i ./Images/Item1/image2.jpg -o ./tmp/Features2.pkl -n 100
-
-# Run the ORB_Matcher Python Code on the two extracted feature files:-
-
+```
+### Run the ORB_Matcher Python Code on the two extracted feature files:-
+```
 python3 ./Python_Progs/ORB_Matcher.py ./tmp/Features1.pkl ./tmp/Features2.pkl 100 100
-
-# Cross-check the correctness of "ORB_Matcher.py" using the "standardMatcher.py" by matching the output of the two programs on the same feature files:-
-
+```
+### Cross-check the correctness of "ORB_Matcher.py" using the "standardMatcher.py" by matching the output of the two programs on the same feature files:-
+```
 python3 ./Python_Progs/standardMatcher.py -pkl1 ./tmp/Features1.pkl -pkl2 ./tmp/Features2.pkl
+```
 
-
-# The following script takes two image files, extracts their features using the "featureExtracter.py" program and then runs the "ORB_Matcher" Python Code on the two extracted feature files to calculate matches:-
-
+### The following script takes two image files, extracts their features using the "featureExtracter.py" program and then runs the "ORB_Matcher" Python Code on the two extracted feature files to calculate matches:-
+```
 ./ORB_Python.sh 100 ./Images/Item1/image1.jpg ./Images/Item1/image2.jpg
+```
+### The following script executes the "ORB_Matcher" Python Code for every pair of iamges from 1) same Item and 2) from different items.  The script internally calls the "ORB_Python.sh" script in iteraton. Before running the following script, set the debug flag to zero in "ORB_Python.sh" (for ease of visualiztion only).
+```
+./TestScript.sh
+```
 
-# The following script executes the "ORB_Matcher" Python Code for every pair of iamges from 1) same Item and 2) from different items.  The script internally calls the "ORB_Python.sh" script in iteraton. Before running the following script, set the debug flag to zero in "ORB_Python.sh" (for ease of visualiztion only).
-
-./TestScript.sh 
 =============================================================================================================
 
-# Eextract feature files from any two image files of your choice using the "featureExtracter.py" program.
-
+### Eextract feature files from any two image files of your choice using the "featureExtracter.py" program.
+```
 python3 ./Python_Progs/featureExtracter.py -i ./Images/Item1/image1.jpg -o ./tmp/Features1.pkl -n 100
 python3 ./Python_Progs/featureExtracter.py -i ./Images/Item1/image2.jpg -o ./tmp/Features2.pkl -n 100
-
-# Run "circomPreprocessor.py" to generate "CircomInput.JSON" from the extracted feature files. 
-
+```
+### Run "circomPreprocessor.py" to generate "CircomInput.JSON" from the extracted feature files. 
+```
 python3 ./Python_Progs/circomPreprocessor.py ./tmp/Features1.pkl ./tmp/Features2.pkl 100 100
-
-# cd inside the "Circom_Circuits" dir and Compile the main Circom_Circuit using the following command:-
-
+```
+### cd inside the "Circom_Circuits" dir and Compile the main Circom_Circuit using the following command:-
+```
 circom ORB_Matcher.circom --r1cs --wasm --sym -l /home/smaity/
-
-# To attach Merkle Roots:-
-
+```
+### To attach Merkle Roots:-
+```
 node ./MerkelRootCal/calMerkleRoot.js 
-
-# To generate Witness run the following command:-
-
+```
+### To generate Witness run the following command:-
+```
 node ./Circom_Circuits/ORB_Matcher_js/generate_witness.js ./Circom_Circuits/ORB_Matcher_js/ORB_Matcher.wasm circomInputWithHash.json witness.wtns
+```
 
-
-# The following script takes two image files, extracts their features using the "featureExtracter.py" program, generates "CircomInput.JSON" from the extracted feature files, and then runs the "ORB_Matcher" Circom Code on the two extracted feature files to calculate matches:-
-
+### The following script takes two image files, extracts their features using the "featureExtracter.py" program, generates "CircomInput.JSON" from the extracted feature files, and then runs the "ORB_Matcher" Circom Code on the two extracted feature files to calculate matches:-
+```
 ./ORB_Circom.sh 100 ./Images/Item1/image1.jpg ./Images/Item1/image2.jpg
-
+```
 
 =======================================================
-Now you can compare the result produced by the Python program and the resul produced by the Circom program on any two images of your choice by just comparing the outcome of folloiwng two scripts:-
-
+### Now you can compare the result produced by the Python program and the resul produced by the Circom program on any two images of your choice by just comparing the outcome of folloiwng two scripts:-
+```
 ./ORB_Python.sh 100 ./Images/Item1/image1.jpg ./Images/Item1/image2.jpg
-
+```
 VS.
-
+```
 ./ORB_Circom.sh 100 ./Images/Item1/image1.jpg ./Images/Item1/image2.jpg
-
+```
