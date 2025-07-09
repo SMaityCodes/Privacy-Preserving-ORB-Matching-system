@@ -1,6 +1,8 @@
+/**  ALL COPYRIGHTS RESERVED BY MANASA PJ & S MAITY **/  
+
 pragma circom 2.0.0;
 include "circomlib/circuits/comparators.circom";
-include "MMCircuits.circom";
+include "ORB_Utils.circom";
 
 template Matcher(r2,c) {
     signal input debug;
@@ -62,7 +64,7 @@ template Matcher(r2,c) {
     isEq.in[1] <== (r2-1);
     isMatch <== isEq.out;
    
-   if(!debug){
+   if(debug){
    	if(isMatch) log("Matches");
     	else log("No Match");
    }
@@ -78,16 +80,16 @@ template Main(r1, r2, c){
 	signal input in1[r1][c];
     	signal input in2[r2][c];
     	
-    	signal output tot_matches, avg_minDist, normalized_dist, normalized_mtch_cnt, final_score, final_result;
+    	signal output tot_matches, avg_minDist, normalized_dist, normalized_mtch_cnt, final_score, final_result, good_match_percnt;
     	
     	signal tot_mindist[r1+1];
-    	component intDiv1, intDiv2, intDiv3, intDiv4, eq, match[r1], lt, lte;
+    	component intDiv1, intDiv2, intDiv3, intDiv4, intDiv5, eq, match[r1], lt, lte;
     	var match_count = 0;
     	
     	tot_mindist[0] <== 0;
     	
     	for (var i = 0; i < r1; i++) {
-    		if(!debug){
+    		if(debug){
    			log("===============   Matching with Query Descriptor no. ", i, "================");
    		}
     		
@@ -149,22 +151,29 @@ template Main(r1, r2, c){
 	lte.in[0] <== match_cnt_threshold;
     	lte.in[1] <== tot_matches;
     	
+    	
+    	// Calculate Percentage of Good Matches.
+    	intDiv5 = IntDivision();
+    	intDiv5.a <== (tot_matches * 100);
+	intDiv5.b <== r1;
+	good_match_percnt <== intDiv5.q_rounded;
+	
 	if(!debug){
-   		log("Total No. of Good Matches = ", tot_matches);
+   		log("No. of Good Matches = ", tot_matches);
    		//log("TotMinDist = ", tot_mindist[r1]);
    		if(tot_matches>0){
-   			log("AvgMinDist(Rounded) for Good Matches = ", avg_minDist);
+   			log("AvgMinDist for Good Matches = ", avg_minDist);
    			log("Normalized Avg Distance = ", normalized_dist);
    			//log("Normalized Match Count = ", lt.in[0]);
    			log("Normalized Match Count (cut to 100) = ", normalized_mtch_cnt);
    		}
    		log("Final Score = ", final_score);
-   		if(lte.out) log("@@@ MATCH: Same fingerprint");
-   		else log("XXX NO MATCH: Different fingerprints");
+   		log("=== Final Result === ");
+   		if(lte.out) log("@@@ MATCH: Same item");
+   		else log("XXX NO MATCH: Different items");
+   		log("Percentage of Features Matched =", good_match_percnt, "%");
    	} 
 }
-
-// component main = Main(1683, 1763,256);
 
 component main = Main(100, 100, 256);
 

@@ -43,8 +43,8 @@ def main():
         # Save to pickle file
         save_to_pkl({'keypoints': keypoints, 'descriptors': descriptors}, args.output)
         
-        print(f"Successfully extracted {len(keypoints)} ORB descriptors and saved to '{args.output}'")
-        print(f"Descriptor shape: {descriptors.shape} (each descriptor is 32 bytes)")
+        # print(f"Successfully extracted {len(keypoints)} ORB descriptors and saved to '{args.output}'")
+        # print(f"Descriptor shape: {descriptors.shape} (each descriptor is 32 bytes)")
         
     except Exception as e:
         print(f"Error: {str(e)}")

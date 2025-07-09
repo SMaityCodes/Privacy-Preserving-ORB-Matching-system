@@ -1,0 +1,17 @@
+PyDebug = 0 
+	# Whether the ORB_Matcher.py to be executed in debug mode or not
+	
+CircomDebug = 0
+	# Whether the ORB_Matcher.circom to be executed in debug mode or not
+	
+lowes_ratio = 0.80
+	# Lowe's Ratio
+	
+min_match_percnt = 20
+	# Min. match percentage. In this implementation, a match is declared solely based on if percentage of 'good matches' crosses this threshold.
+	
+distance_weight = 40
+	# Used in the calculation of Final Match Score. Note that (count_weight + distance_weight) = 100
+	
+max_match_percnt = 80 
+	# Used in the calculation of Normalized match count which is set to 100 if percentage of match count crosses this threshold.

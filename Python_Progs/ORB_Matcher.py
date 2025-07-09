@@ -4,16 +4,38 @@ import sys
 import json
 from typing import List, Tuple
 
+param_file = "params.dat"
+
+def load_params(param_file: str) -> dict:
+    """
+    Load parameters from a file in key=value format.
+    """
+    params = {}
+    try:
+        with open(param_file, 'r') as f:
+            for line in f:
+                if '=' in line:
+                    key, val = line.strip().split('=', 1)
+                    params[key.strip()] = val.strip()
+    except Exception as e:
+        print(f"Error loading parameter file: {e}")
+        sys.exit(1)
+    return params
+    
+    
 class KNNFingerprintMatcher:
-    def __init__(self):
+    def __init__(self, params: dict = None):
         # KNN matching parameters
-        self.min_matches = 4          # Reduced minimum matches
-        self.lowes_ratio = 0.75        # More lenient ratio
+        self.debug = int(params.get("PyDebug", 0)) if params else 0         # Default No Debug
+        self.min_match_percnt = int(params.get("min_match_percnt", 20)) if params else 20          # Reduced minimum matches (% of total features)
+        self.max_match_percnt = int(params.get("max_match_percnt", 30)) if params else 30          
+        self.lowes_ratio = float(params.get("lowes_ratio", 0.70)) if params else 0.70        # More lenient ratio
         self.knn_k = 2                 # Standard KNN with k=2
         
+        
         # Score calculation weights (fixed-point representation scaled by 100)
-        self.distance_weight = 40      # 0.4 * 100
-        self.count_weight = 60         # 0.6 * 100
+        self.distance_weight = int(params.get("distance_weight", 40)) if params else 40     # 0.4 * 100
+        self.count_weight = 100 - self.distance_weight  # Make weights sum to 100
 
     def load_features(self, feature_file):
         """Load features from file"""
@@ -66,7 +88,7 @@ class KNNFingerprintMatcher:
             # Convert to match format (index, distance)
             matches.append([(idx, float(dist)) for idx, dist in top_k])
         
-        print(matches)
+        # if self.debug == 1: print(matches)
         return matches
 
     def ratio_test(self, matches: List[List[Tuple[int, float]]]) -> List[Tuple[int, int, float]]:
@@ -79,13 +101,12 @@ class KNNFingerprintMatcher:
                 
             best_match, second_best_match = m[0], m[1]
             ratio = best_match[1] / second_best_match[1]
-
-
+            
             if ratio < self.lowes_ratio:
                 good_matches.append((best_match[0], best_match[1]))
-                print("Query Descriptor: ", des_indx, "Match")
-            else:
-                print("Query Descriptor: ", des_indx, "No Match")
+                # if self.debug == 1: print("Query Descriptor: ", des_indx, "Match")
+            # else:
+                # if self.debug == 1: print("Query Descriptor: ", des_indx, "No Match")
             des_indx = des_indx + 1
         return good_matches
 
@@ -101,8 +122,9 @@ class KNNFingerprintMatcher:
             des1 = des1_buffer[:r1]
             des2 = des2_buffer[:r2]
 
-            print("Number of rows in desc1_buffer:",des1_buffer.shape[0])
-            print("Number of rows in desc1_buffer:",des2_buffer.shape[0])
+            # if self.debug == 1:
+                # print("Number of rows in desc1_buffer:",des1_buffer.shape[0])
+                # print("Number of rows in desc1_buffer:",des2_buffer.shape[0])
 
             #sys.exit(1)
 
@@ -124,17 +146,19 @@ class KNNFingerprintMatcher:
                     match_distances.append([m[0][1], float('inf')])
             
             # Fixed-point scoring (scaled by 100)
-            print("no. of good matches:",num_good)
+            if self.debug == 1: print("\nNo. of Good Matches:",num_good)
 
             if num_good > 0:
                 avg_distance = np.mean([dist for _, dist in good_matches])
-                print("avg_distance:",avg_distance)
+                if self.debug == 1: print("Avg Distance for Good Matches:",avg_distance)
 
-                normalized_quality = int(round((1 - (avg_distance / 256)) * 100))
-                print("normalized avg distance:",normalized_quality)
-                count_score = int(round(min(100, num_good / 30 * 100)))
-                print("normalized match count:",count_score)
-                final_score = (self.distance_weight * normalized_quality + 
+                normalized_dist = int(round((1 - (avg_distance / 256)) * 100))
+                if self.debug == 1: print("Normalized Avg Distance:",normalized_dist)
+
+                
+                count_score = int(round(min(100, num_good / self.max_match_percnt  * 100)))
+                if self.debug == 1: print("Normalized Match Count:",count_score)
+                final_score = (self.distance_weight * normalized_dist + 
                              self.count_weight * count_score) // 100
             else:
                 final_score = 0
@@ -142,7 +166,8 @@ class KNNFingerprintMatcher:
             print("Final Score:",final_score)
 
             # Match decision
-            is_match = num_good >= self.min_matches
+            min_matches = (self.min_match_percnt * r1)/100;
+            is_match = num_good >= min_matches
 
             return is_match, final_score, num_good, good_matches, match_distances
             
@@ -157,7 +182,8 @@ if __name__ == "__main__":
         print("Usage: python knn_fingerprint_matcher.py features1.pkl features2.pkl r1 r2")
         sys.exit(1)
 
-    matcher = KNNFingerprintMatcher()
+    params = load_params(param_file)
+    matcher = KNNFingerprintMatcher(params)
     
     try:
         features1 = matcher.load_features(sys.argv[1])
@@ -167,11 +193,13 @@ if __name__ == "__main__":
 
         # Human-readable output
         is_match, score, num_matches, _, _ = matcher.match(features1, features2, r1, r2)
-        print("\n=== Final Result ===")
+        if matcher.debug == 1: print("\n=== Final Result ===")
         if is_match:
-            print(f"✅ MATCH: Same fingerprint (score: {score}/100)")
+            print(f"✅ MATCH: Same Item")
+            if matcher.debug == 1:
+                print(f"Percentage of Features Matched = {(num_matches / r1) * 100} %")
         else:
-            print(f"❌ NO MATCH: Different fingerprints")
+            print(f"❌ NO MATCH: Different Items")
     
     except Exception as e:
         print(f"Error: {str(e)}")
