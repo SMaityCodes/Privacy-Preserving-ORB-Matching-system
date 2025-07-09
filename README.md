@@ -4,9 +4,9 @@
 ```
 
 Privacy-Preserving-ORB-Matching-system/
-├── Circom_Circuits/              # Contains the JS progs require
-│   ├── ORB_Matcher.circom
-│   └── ORB_Utils.circom
+├── Circom_Circuits/              
+│   ├── ORB_Matcher.circom      # The main Circom Circiut implementing ORB Matching
+│   └── ORB_Utils.circom        # The Circiut implementing utility templates required by ORB_Matcher.circom
 ├── Images/              # Contains the JS progs require
 │   ├── Item1
 │   │   └── image1.jpg, image2.jpg, image3.jpg
