@@ -105,32 +105,53 @@ Privacy-Preserving-ORB-Matching-system/
 
 We acheive the same objective as defined by in-toto framework without disclosing either the Layout or the Link-Metadata contents to the end-user. This way we can ensure the SSC security while preserving the pivacy of a software firm. We use ZKP for this purpose. The details are as follows:-
 
-- **Private Inputs**: The actual Layout file and all the Link-Metadata files
-- **Commitments to Private Inputs**: Merkle-Root Hashes of the Layout file and Link-Metadata files
-- **Note**: there is no other Public Inputs besides the commitments to private inputs
+- **Private Inputs**: The actual extracted image features
+- **Commitments to Private Inputs**: Merkle-Root Hashes of the extracted image features
+- **Public Inputs** (other than the Commitments to Private Inputs): The ORB matching configuration parameters such as Lowe's Ratio, max_matches, dist_weight, match_cnt_threshold (see inside the "params.dat" file for detailed descriptions on these parameters)
 - **What the Computation Function genertates as output?**
-  - A boolean value to indicate whether the given Layout data matches with the given Merkle-Root Hash of the layout file
-  - A boolean value to indicate whether the given Link-Metadata matches with the given Merkle-Root Hash of the Link-Metadata file
-  - A boolean value to indicate whether the given Link-Metadata is compliant with the given Layout data (according to in-Toto logic described above)
+  - A boolean value to indicate whether the given image features matches with the given Merkle-Root Hashes 
+  - No. of Good Matches
+  - AvgMinDist for Good Matches
+  - Normalized Avg Distance
+  - Normalized Match Count
+  - Final Match Score
+  - Final Result: the two images match or not
     
-- **Who is the Prover?**: the s/w development firm
-- **Who is the Verifier?**: the end-user (Client)
+- **Who is the Prover?**: Any entity / organization having a temper-proof h/w device which can extract ORB descriptors from an image and also can generate digital signature on the Merkle-Root Hash of the extracted descriptors.
+- **Who is the Verifier?**: Any entity / organization who wants to remotely verify that an  image scanned by a trusted temper-proof device is not the image of a specific object in a privacy-preserving way. Note that in this verification process, the verifies learns nothing about the scanned image.
 - **Who is the TTP?**: Any globally trusted third party or, blockchain. Note that the private inputs are not disclosed to the TTP. It only generates the proving-key and verificationkey from a specific computation function $f$.
   
-- **How does the Verifier (end-user) gets the commitments to private inputs (Merkle-Root Hashes of the Layout file and Link-Metadata files)?**
-  - The PM signs the following information using it's private-key and sends to the client
-    - The names of all steps and the public-keys of the authorized functionary for each step
-    - The Merkle-Root Hash of the Layout Data (the data itself is not shared with the client)
-  - The client fully trusts the PM and already holds the public-key of the PM (same assumption as in original in-Toto)
-  - Client verifies the above information using the PM's public key
-  - Each functionary signs the Merkle-Root Hash of the Link-Metadata (the metadata itself is not shared with the client) of the corresponding step
-  - The signed Merkle-Root Hashes of all the Link-Metadata are also sent to the client
-  - Client verifies the signatures and receives the authentic Merke-Root hases of all link-metadata
+- **How does the Verifier (end-user) gets the commitments to private inputs (Merkle-Root Hashes of the Extracted Features of the two Images)?**
+  - One image with which the verifier wants to compare is held by the verifier itself.
+  - The Merkle-Root hash of the extracted features of the other image (scanned by the remote temper-proof device) is digitally signed by the device
+  - The prover sends the above Merkle-Root hash along with the digital signature to the verifier
+  - The verifier can get the authentic public-key of the temper-proof device from it's manufacturer's website
+  - The verifier verifies the digital signature using the public key of the temper-proof device
+    
 
 
+### 🧪  What we have Implemented in this Prototype Version?
 
+[🔝 Back to Top](#)
 
-## 🚀 How to Use this Repository:-
+The main objective of the implementation was to write the circom circuits to perform ORB matching in a privacy-preserving manner. However, the circuits cannot work directly on the original images, rather we use python codes for feature extractions and convering it into JSON format required by circom. Moreover, the circuits also verifies the correctness of the image-descriptors fade to it by verifying their Merkle-root hashes. The circuit also calculates some output scores as a result of the matching operation.
+
+In order to test the correctness of our implemented circom circuits we have also written python codes for performing ORB matching. We have written two different versions of python codes for this purpose, viz., one using standard CV2 libraray and the other from the scratch. The purpose of writing the python codes from the scratch was to mimic the algorithm into a circom circuit. Here is a summary of our contributions:-
+
+- We have written Python programs:-
+  - a python program to extract ORB descriptors from an image
+  - a python program to perform ORB matching bewteen two feature files (.pkl files) corresponding to two images, using standard CV2 libraray of python
+  - a python program which can achieve excatly the same task as stated above; however, without using CV2 libraray. All the functions were written from the scratch. Additionally this program also calculates some output scores as the result of the matching operation.
+  - a python program to generate input file (in JSON format) from the extracted ORB descriptors of images, required by the circom program
+- We have written JavaScript program:-
+  - to calculate the Merkle-Root hashes of the extracted ORB descriptors
+- We have written the circom circuits to perform ORB matching bewteen two feature files and generate output scores as the result of the matching operation. The circom implementataion can achieve exactly the same objective as the Python ORB matcher. However, the circom codes can do it in a privacy-preserving manner as the actual ORB descriptors of images are taken as private-inputs. The circuit also verifies whether the private-inputs used in the computataion matches their Markle-Root hashes or not.
+  
+- Digital Signature generation and verification is not part of this project - whcih can be achieved using any standard crypto. library or tool
+
+We take a two-fold strategy for testing the correctness of our implementations. First, we verify that the python ORB matcher version written from the scratch without any libraray function gives exactly the same output as the python version using standard libraray function for same input images. Next, we verify that the circom ORB matcher also gives exactly the same output as the python ORB matcher version written from the scratch.
+
+## 🚀 How to Use/Test this Repository:-
 
 
 ### Grant Exeuton Priviledge to the bash scripts:-
