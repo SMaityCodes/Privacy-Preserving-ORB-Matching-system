@@ -1,5 +1,6 @@
 # Privacy-Preserving-ORB-Matching-system
 
+## 📁 Project Structure
 
 ```
 
@@ -44,3 +45,73 @@ Privacy-Preserving-ORB-Matching-system/
                              the python and circom matcher codes with exactly the same configurations.
 
 ```
+
+
+TESTING THE PYTHON PROGRAMS:-
+
+
+# Grant Exeuton Priviledge to the bash scripts:-
+chmod +x ORB_Python.sh
+chmod +x TestScript.sh
+chmod +x ORB_Circom.sh
+
+
+# Eextract feature files from any two image files using the "featureExtracter.py" program. First argument is input filename, second argument is output filename and the third argument is no. of features to be extracted.
+
+python3 ./Python_Progs/featureExtracter.py -i ./Images/Item1/image1.jpg -o ./tmp/Features1.pkl -n 100
+python3 ./Python_Progs/featureExtracter.py -i ./Images/Item1/image2.jpg -o ./tmp/Features2.pkl -n 100
+
+# Run the ORB_Matcher Python Code on the two extracted feature files:-
+
+python3 ./Python_Progs/ORB_Matcher.py ./tmp/Features1.pkl ./tmp/Features2.pkl 100 100
+
+# Cross-check the correctness of "ORB_Matcher.py" using the "standardMatcher.py" by matching the output of the two programs on the same feature files:-
+
+python3 ./Python_Progs/standardMatcher.py -pkl1 ./tmp/Features1.pkl -pkl2 ./tmp/Features2.pkl
+
+
+# The following script takes two image files, extracts their features using the "featureExtracter.py" program and then runs the "ORB_Matcher" Python Code on the two extracted feature files to calculate matches:-
+
+./ORB_Python.sh 100 ./Images/Item1/image1.jpg ./Images/Item1/image2.jpg
+
+# The following script executes the "ORB_Matcher" Python Code for every pair of iamges from 1) same Item and 2) from different items.  The script internally calls the "ORB_Python.sh" script in iteraton. Before running the following script, set the debug flag to zero in "ORB_Python.sh" (for ease of visualiztion only).
+
+./TestScript.sh 
+=============================================================================================================
+
+# Eextract feature files from any two image files of your choice using the "featureExtracter.py" program.
+
+python3 ./Python_Progs/featureExtracter.py -i ./Images/Item1/image1.jpg -o ./tmp/Features1.pkl -n 100
+python3 ./Python_Progs/featureExtracter.py -i ./Images/Item1/image2.jpg -o ./tmp/Features2.pkl -n 100
+
+# Run "circomPreprocessor.py" to generate "CircomInput.JSON" from the extracted feature files. 
+
+python3 ./Python_Progs/circomPreprocessor.py ./tmp/Features1.pkl ./tmp/Features2.pkl 100 100
+
+# cd inside the "Circom_Circuits" dir and Compile the main Circom_Circuit using the following command:-
+
+circom ORB_Matcher.circom --r1cs --wasm --sym -l /home/smaity/
+
+# To attach Merkle Roots:-
+
+node ./MerkelRootCal/calMerkleRoot.js 
+
+# To generate Witness run the following command:-
+
+node ./Circom_Circuits/ORB_Matcher_js/generate_witness.js ./Circom_Circuits/ORB_Matcher_js/ORB_Matcher.wasm circomInputWithHash.json witness.wtns
+
+
+# The following script takes two image files, extracts their features using the "featureExtracter.py" program, generates "CircomInput.JSON" from the extracted feature files, and then runs the "ORB_Matcher" Circom Code on the two extracted feature files to calculate matches:-
+
+./ORB_Circom.sh 100 ./Images/Item1/image1.jpg ./Images/Item1/image2.jpg
+
+
+=======================================================
+Now you can compare the result produced by the Python program and the resul produced by the Circom program on any two images of your choice by just comparing the outcome of folloiwng two scripts:-
+
+./ORB_Python.sh 100 ./Images/Item1/image1.jpg ./Images/Item1/image2.jpg
+
+VS.
+
+./ORB_Circom.sh 100 ./Images/Item1/image1.jpg ./Images/Item1/image2.jpg
+
